@@ -23,6 +23,7 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/IR/BasicBlock.h"
 #include <llvm/IR/DebugInfo.h>
 
 using namespace llvm;
@@ -30,8 +31,6 @@ using namespace llvm;
 #define DEBUG_TYPE "hello"
 
 // STATISTIC(HelloCounter, "Counts number of functions greeted");
-
-
 
 namespace {
     struct PrintfCounter : public FunctionPass {
@@ -68,18 +67,13 @@ namespace {
     struct PrintfCounter2 : public FunctionPass {
         static char ID;
         PrintfCounter2() : FunctionPass(ID) {}
-        /*
-         ~PrintfCounter2() {
-         errs() << "\n" << CallCount << " printf functions were called.\n";
-         }
-         */
+        
         // We don't modify the program, so we preserve all analyses.
         void getAnalysisUsage(AnalysisUsage &AU) const override {
             AU.addRequired<LoopInfoWrapperPass>();
             AU.addRequired<ScalarEvolutionWrapperPass>();
             //            AU.addRequired<ScalarEvolution>();
             AU.setPreservesAll();
-            
             
         }
         
@@ -88,6 +82,7 @@ namespace {
                 return 1;
             }
             
+            //The following depends on your version of llvm sources
             ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
             //ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
             
@@ -96,26 +91,6 @@ namespace {
             
         }
         
-        /* different approach which didnt work properly
-         void countBlocksInLoop(Loop *L, unsigned nesAng) {
-         
-         unsigned numBlocks = 0;
-         Loop::block_iterator bb;
-         for(bb = L-> block_begin(); bb != L-> block_end();++bb){
-         numBlocks++;
-         
-         
-         }
-         errs() << "Loop level " << nesAng << " has " << numBlocks << " blocks\n";
-         std::vector<Loop*> subLoops = L->getSubLoops();
-         Loop::iterator j, f;
-         for (j = subLoops.begin(), f = subLoops.end(); j != f; ++j){
-         countBlocksInLoop(*j, nesAng + 1);
-         
-         }
-         
-         }
-         */
         virtual bool runOnFunction(Function &F) override {
             
             LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
@@ -139,18 +114,6 @@ namespace {
             }
             errs() << CallCount << " printf were called \n";
             
-            
-            /* it's for different approach which didnt work properly
-             int loopCounter = 0;
-             errs() <<"Function : " + F.getName() + "\n";
-             for (LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
-             countBlocksInLoop(*i, 0);
-             
-             errs() << total <<"\n";
-             errs() << Loop();
-             }
-             */
-            
             return false;  //No change to code
         }
     };
@@ -166,6 +129,7 @@ namespace {
         static char ID;
         int CallCount = 0;
         Instruction *SavedInstruction=NULL;
+        
         CopyPaste() : FunctionPass(ID) {}
         
         
@@ -174,22 +138,18 @@ namespace {
             for (auto &B :  F) {
                 for (auto &I : B) {
                     
-//                  errs() <<  I.getOpcodeName() << "\n";
-                    
                     if(SavedInstruction!=NULL && I.isIdenticalTo(SavedInstruction) ){
-                        //if(SavedInstruction==NULL)
-                    
-// use -g option with clang to get line info
+                        
+                        // use -g option with clang to get line info
                         if (DILocation *Loc = I.getDebugLoc()) { // Here I is an LLVM instruction
                             unsigned Line = Loc->getLine();
-//                            StringRef File = Loc->getFilename();
-//                            StringRef Dir = Loc->getDirectory();
-                      
-                        errs()<< "Lines " << Line -1  << " and " << Line  << " are identical:" << "\n";
-                          }
+                            //                            StringRef File = Loc->getFilename();
+                            //                            StringRef Dir = Loc->getDirectory();
+                            errs()<< "Lines " << Line -1  << " and " << Line  << " are identical:" << "\n";
+                        }
                         else { // no debug info
                             errs() << " Identical Lines found. No line number info available:\n";
-                                                    }
+                        }
                         I.dump();
                         errs() << "\n";
                     }
@@ -210,4 +170,73 @@ namespace {
 }
 char CopyPaste::ID = 0;static RegisterPass<CopyPaste> S("copypaste","CopyPaste detection");
 
+
+// Find IF THEN ELSE expressions where the IF Block is identical to the THEN block.
+namespace {
+    struct CopyPaste2 : public FunctionPass {
+        
+        static char ID;
+        BasicBlock  *IFBlock = NULL;
+        BasicBlock  *ELSEBlock = NULL;
+        
+        CopyPaste2() : FunctionPass(ID) {}
+        
+        virtual bool runOnFunction(Function &F) override {
+            bool FirstBlockInFunction = true;   // Prime the pump
+            
+            for (auto &B :  F) {
+                
+                if (not FirstBlockInFunction)
+                    IFBlock = ELSEBlock;
+                ELSEBlock=&B;
+                
+                if (FirstBlockInFunction)               // Nothing to Compare since this is the first block in fuction
+                    FirstBlockInFunction = false;
+                else {                                 //Check for IF statement Control Flow
+                    if ( (ELSEBlock->getUniquePredecessor() == IFBlock->getUniquePredecessor() ) &&
+                        (ELSEBlock->getUniqueSuccessor() == IFBlock->getUniqueSuccessor())){
+                        
+                        errs() << "IF THEN ELSE FOUND, IF BlOCKSIZE = " << IFBlock->size() << " ELSE BLOCKSIZE = " << ELSEBlock->size() << "...  Checking contents  " << "\n";
+                        
+                        if (ELSEBlock->size()!=IFBlock->size()) {
+                            errs() << "IF and ELSE are not identical \n";
+                        }
+                        else{
+                            BasicBlock::iterator iIFBlock = IFBlock->begin();
+                            BasicBlock::iterator IELSEBlock = ELSEBlock->begin();
+                            
+                            //iIFBlock->dump();
+                            
+                            
+                            //WHY DOESN'T THIS WORK?    bool identical = (IELSEBlock)->isIdenticalTo(*iIFBlock);
+                            bool identical = true;
+                            
+                            bool stillSearching = true;
+                            while (stillSearching) {
+                                iIFBlock++;
+                                IELSEBlock++;
+                                stillSearching = (  (iIFBlock != IFBlock->end() ) && (IELSEBlock != ELSEBlock->end() ) );
+                                //SAME PROBLEM                  identical = (IELSEBlock)->isIdenticalTo(*iIFBlock);
+                                identical = true;
+                            }
+                            
+                            // use -g option with clang to get line info
+                            if (DILocation *Loc = (*iIFBlock).getDebugLoc()) { // Here I is an LLVM instruction
+                                unsigned Line = Loc->getLine();
+                                //                            StringRef File = Loc->getFilename();
+                                //                            StringRef Dir = Loc->getDirectory();
+                                errs()<< "Lines " << Line << " are identical:" << "\n";
+                            }
+                            else { // no debug info
+                                errs() << " Identical Blocks found. No line number info available:\n";
+                            }
+                        }
+                    }
+                }
+            }
+            return false; // Does not change code
+        }
+    };
+}
+char CopyPaste2::ID = 0;static RegisterPass<CopyPaste2> A("copypaste2","CopyPaste2 detection");
 
