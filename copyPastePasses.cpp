@@ -49,13 +49,13 @@ namespace{
         
     };
     
-    struct CopyPaste3 : public FunctionPass {
+    struct CopyPaste3 : public ModulePass {
         
         static char ID;
         
         Instruction *SavedInstruction=NULL;
         
-        CopyPaste3() : FunctionPass(ID) {}
+        CopyPaste3() : ModulePass(ID) {}
         
         const Function* findEnclosingFunc(const Value* V) {
             if (const Argument* Arg = dyn_cast<Argument>(V)) {
@@ -91,7 +91,7 @@ namespace{
             return Var->getName();
         }
         
-        virtual bool runOnFunction(Function &F) override {
+        virtual bool runOnModule(Module &M) {
             //F.dump();
             // We assume there are limit of 50 lines in source code
             // We need to have the objects ready so we can easily access the members
@@ -99,14 +99,15 @@ namespace{
             for (int i = 1; i < 51; i++)
                 objects.push_back(Stack());
             
-            for (auto &B :  F) {
-                for (auto &I : B) {
+            for (auto &F :  M) {
+                for (auto &B : F){
+                    for(auto &I: B){
                     
                     LoadInst* loadInst;
                     
                     if((loadInst = dyn_cast<LoadInst>(&I))){
                         Value* operand = loadInst->llvm::User::getOperand(0);
-                        
+                       
                         operand->dump();
                        
                         errs() << "Name: " << getOriginalName(operand) << "\n";
@@ -123,7 +124,7 @@ namespace{
                             objects.at(1).setLine(first);
                             errs()<< objects.at(1).getLine() <<"first line\n";
                             
-                            for(int i=2; i<5; i++)
+                            for(int i=2; i<20; i++)
                             {
                                 objects.at(i).setLine(objects.at(i-1).getLine()+1);
                                 
@@ -142,7 +143,7 @@ namespace{
                              
                          }
                         
-                            for(int i=2; i<5; i++)
+                            for(int i=2; i<20; i++)
                             {
                                 if(objects.at(i).getLine()== Line)
                                 {
@@ -189,8 +190,10 @@ namespace{
 
                     
                 
+                    }
+                        
                     }}}
-            objects.at(1).areTwoLinesIdentical(objects.at(1), objects.at(3));
+            objects.at(10).areTwoLinesIdentical(objects.at(10), objects.at(13));
             
             return false;  //No change to code
                 }
