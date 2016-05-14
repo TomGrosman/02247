@@ -1,0 +1,155 @@
+#include "llvm/ADT/Statistic.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/IR/BasicBlock.h"
+#include <llvm/IR/DebugInfo.h>
+#include "llvm/available-support.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/InstIterator.h"
+#include <vector>
+
+using namespace llvm;
+using namespace std;
+
+// Find THEN THEN ELSE expressions where the THEN Block is identical to the THEN block.
+namespace {
+    
+    int BlockTableIteratorCounter = 0;
+    class BlockHolder {
+        int startLine, endLine,blockLength;
+        
+    public:
+        BlockHolder(int start, int end, int length) {
+            startLine = start;
+            endLine = end;
+            blockLength = length;
+        }
+        
+        void printTable(){
+            errs()  << "start line: " << startLine
+                        << "  end line: " << endLine
+                        << "  Block Length: " << blockLength << "\n";
+            
+
+                
+        }
+    };
+    
+    int thenFirstLine,elseFirstline,blockLength;
+
+    map<int,BlockHolder> BlockTable;
+    
+    struct IFBLOCKS: public FunctionPass {
+        
+        enum Equivalency {
+            Identical, Literal, Structural, None
+        };
+        // Identical = literally and structurally
+        // Literal = same literals but not same variables (dTHENferent semantics)
+        // Structural = same statement form, but dTHENferent variables and/or literals
+        
+        bool compareBlocks(BasicBlock block1, BasicBlock block2,
+                           Equivalency compareType) {
+            return true;
+        }
+        
+        static char ID;
+        BasicBlock *THENBlock = NULL;
+        BasicBlock *ELSEBlock = NULL;
+        
+        IFBLOCKS() :
+        FunctionPass(ID) {
+        }
+        
+        virtual bool runOnFunction(Function &F) override {
+            bool FirstBlockInFunction = true;   // Prime the pump
+            
+            for (auto &B : F) {
+                
+                if (not FirstBlockInFunction)
+                    THENBlock = ELSEBlock;
+                ELSEBlock = &B;
+                
+                if (FirstBlockInFunction) // Nothing to Compare since this is the first block in fuction
+                    FirstBlockInFunction = false;
+                else {                       //Check for THEN statement Control Flow
+                    if ((ELSEBlock->getUniquePredecessor()
+                         == THENBlock->getUniquePredecessor())
+                        && (ELSEBlock->getUniqueSuccessor()
+                            == THENBlock->getUniqueSuccessor())) {
+                            
+                            errs() << "IF THEN ELSE FOUND, \n  THEN BLOCKSIZE = "
+                            << THENBlock->size() << "\n  ELSE BLOCKSIZE = "
+                            << ELSEBlock->size() << "\n";
+                            
+                            if (ELSEBlock->size() != THENBlock->size())
+                                errs()
+                                << " Different sized Blocks found. THEN Block is not identical to ELSE Block. No Comparison will be performed. \n\n";
+                            
+                            else {
+                                
+                                errs() << "   Checking contents...  " << "\n";
+                                
+                                BasicBlock::iterator iTHENBlock = THENBlock->begin();
+                                if (DILocation *Loc = iTHENBlock->getDebugLoc()) {
+                                    unsigned Line = Loc->getLine();
+                                    
+                                    errs() << "THEN BLOCK  startsss at line " << Line << "\n";
+                                                                        thenFirstLine = Line;
+                                }
+                                
+                                BasicBlock::iterator iELSEBlock = ELSEBlock->begin();
+                                
+                                if (DILocation *Loc = iELSEBlock->getDebugLoc()) { // Here I is an LLVM instruction
+                                    unsigned Line = Loc->getLine();
+                                    
+                                    errs() << "Else BLOCK  startssss at line " << Line << "\n";
+                                    elseFirstline = Line;
+
+                                }
+                                
+                                bool stillSearching = true;
+                                while (stillSearching) {
+                                    iTHENBlock++;
+                                    iELSEBlock++;
+                                    stillSearching = ((iTHENBlock != THENBlock->end())
+                                                      and (iELSEBlock != ELSEBlock->end()));
+                                }
+                                
+                                iTHENBlock--;
+                                string opcode = iTHENBlock->getOpcodeName();
+                                errs() << opcode << " Found\n";
+                                if (DILocation *Loc = iTHENBlock->getDebugLoc()) { // Here I is an LLVM instruction
+                                    unsigned Line = Loc->getLine();
+                                    errs() << "THEN BLOCK  ENDZ at line " << Line
+                                    << "\n";
+                                    
+                                    
+                                }
+                                BlockTableIteratorCounter++;
+                                
+                               
+                                
+                                BlockTable.emplace(BlockTableIteratorCounter,BlockHolder(thenFirstLine,elseFirstline,elseFirstline -  thenFirstLine-1));
+                            }
+                        }
+                }
+            }
+            for(auto &iterator : BlockTable)
+                iterator.second.printTable();
+            return false; // Does not change code
+        }
+    };
+}
+char IFBLOCKS::ID = 0;
+static RegisterPass<IFBLOCKS> A("ifblocks", "IFBLOCKS detection");
+
