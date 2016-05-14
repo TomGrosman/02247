@@ -1,4 +1,3 @@
-
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
@@ -18,7 +17,7 @@
 #include "llvm/IR/InstIterator.h"
 #include <vector>
 
-
+using namespace llvm;
 
 namespace{
     // vector to hold the operands in a sourceline
@@ -33,18 +32,19 @@ namespace{
         std::string functionName;        // function where the line is found
         LineInfo lineOperands;      // all operands in the sourceline
         std::string lineOperators;
+        StringRef lineConstant;
         
         
-        
-        ProcessedLine(int ln, std::string fn, LineInfo lo, std::string lop="later"){
+        ProcessedLine(int ln, std::string fn, LineInfo lo , std::string lop="", StringRef co=""){
             lineNumber = ln;
             functionName = fn;
             lineOperands = lo ;
             lineOperators = lop;
+            lineConstant = co;
         }
-        
+        //method to identify fully identical lines , considering operands and operators
         void compareLines (ProcessedLine compareTo){
-            if (lineOperands == compareTo.lineOperands)
+            if (lineOperands == compareTo.lineOperands && lineOperators==compareTo.lineOperators)
                     errs() << "Lines " << lineNumber << " and " << compareTo.lineNumber << "are Identical. \n";
                 else
                     errs() << "Lines " << lineNumber << " and " << compareTo.lineNumber << "are not Identical. \n";
@@ -52,9 +52,9 @@ namespace{
         
         
         //function to detect more complicated patterns.refer to section 4.2 in pdf a4 from the lecture
-        // It should be noted that this has conflicts with what we had before
+        //first Example
         void compareMethods (ProcessedLine compareTo){
-            if (lineOperands.size() == compareTo.lineOperands.size())
+            if (lineOperands.size() == compareTo.lineOperands.size() && lineOperators ==compareTo.lineOperators)
                 errs() << "Methods in lines " << lineNumber << " and " << compareTo.lineNumber << "are Identical. \n";
             else
                 errs() << "Methods in lines " << lineNumber << " and " << compareTo.lineNumber << "are not Identical. \n";
@@ -68,6 +68,16 @@ namespace{
             }
             errs() << "\n";
         }
+        
+        // utility method to print out a operators of a line
+        void printOperatorsLine(){
+            errs() << "Source Line=>"<< lineNumber  << "  Operators=> \n";
+            for (const auto &p : lineOperators){
+                errs() << p ;
+            }
+            errs() << "\n";
+        }
+
         
     };
     struct CopyPaste5 : public ModulePass {
@@ -113,21 +123,28 @@ namespace{
         
         
         
-        void compareRanges(int start1, int end, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
+        void compareRangesForOperands(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
             float counter = 0.0;
-            for(int i=0; i<end-start1; i++)
+            for(int i=0; i<lenght; i++)
                     if(testMap.at(start1+i).lineOperands == testMap.at(start2+i).lineOperands)
                         counter++;
-            errs() << "Ranges of lines are Identical " << (int)(counter/((float)end-(float)start1)*100)<< "%" << "\n";
+            errs() << "Ranges of lines are Identical operand wise" << (int)(counter/((float)lenght)*100)<< "%" << "\n";
         }
         
+        void compareRangesForOperators(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
+            float counter = 0.0;
+            for(int i=0; i<lenght; i++)
+                if(testMap.at(start1+i).lineOperators == testMap.at(start2+i).lineOperators)
+                    counter++;
+            errs() << "Ranges of lines are Identical operator wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+        }
 
         
         virtual bool runOnModule(Module &M) {
             std::map<int, ProcessedLine> lineMap;   // Map containing all source lines processed
             std::map<int, ProcessedLine>::iterator itr;
             itr = lineMap.begin();
-            //M.dump();
+            M.dump();
             for (auto &F :  M) {
                 for (auto &B : F){
                     for(auto &I: B){
@@ -169,10 +186,44 @@ namespace{
                                     }
                                 
                                 }
+                            
+                        }else if((storeInst = dyn_cast<StoreInst>(&I))){
+                            StringRef constant = storeInst->llvm::User::getName();
+                            //errs() << "hello  we are here " << "\n";
+                            errs() << constant << "\n";
+                            //errs() << "hello  we are here 2 " << "\n";
+                            
+                            //errs() << "Name: " << getOriginalName(constant) << "\n";
+                            
+                            if (DILocation *Loc = I.getDebugLoc())
+                            { // Here I is an LLVM instruction
+                                unsigned Line = Loc->getLine();
+                                
+                                errs()<< Line << "\n";
+                                
+                                int lineNumber = 0;
+                                
+                                
+                                lineNumber=Line;
+                                itr=lineMap.find(lineNumber); // Find the line in the map if it exists already
+                                
+                                if (itr == lineMap.end()){  // This is the first operand in this source line
+                                    // so create and initialize the map entry with the key (line number), and a new ProcessedLine object w initialized with the line number, function name, and first operand in the lineOperands vector.
+                                    
+                                    
+                                    StringRef c = constant;
+                                    
+                                    
+                                    //lineMap.emplace(lineNumber, ProcessedLine(lineNumber,F.getName(),c));
+                                    
+                                } else { // line has already been seen and initialized, so just add the latest operand
+                                    //itr->second.lineOperands.push_back(constant);
+                                    
+                                }
+                                
+                            }
                         }
                         
-                       
-                        /*
                         else{
                             errs() << I.getOpcodeName() << "\n";
                             if (DILocation *Loc = I.getDebugLoc())
@@ -193,7 +244,7 @@ namespace{
                             
                             
                             }}
-                        */
+                        
                             errs()<<"****** \n";
                     
                         
@@ -231,10 +282,16 @@ namespace{
             for (auto &p : lineMap) {
                 errs() << "KEY=>" << p.first <<   "  ";
                 p.second.printALine();
+                p.second.printOperatorsLine();
             }
-            lineMap.at(18).compareLines (lineMap.at(19));
+            
+            
+    //these are the tests that you need to uncomment to check and modify the inputs based on your program
+            
+            //lineMap.at(22).compareLines (lineMap.at(23));
             //lineMap.at(18).compareMethods (lineMap.at(19));
-            compareRanges(12,15, 16,lineMap, operands);
+            //compareRangesForOperands(12, 3, 16,lineMap, operands);
+            //compareRangesForOperators(12, 3, 16,lineMap, operators);
             
             return false;  //No change to code
         }
@@ -243,4 +300,3 @@ namespace{
     };
 }
 char CopyPaste5::ID = 0;static RegisterPass<CopyPaste5> M("copypaste5","CopyPaste detection5");
-
