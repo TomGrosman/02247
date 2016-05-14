@@ -1,3 +1,25 @@
+
+#include "llvm/ADT/Statistic.h"
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/IR/BasicBlock.h"
+#include <llvm/IR/DebugInfo.h>
+#include "llvm/available-support.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/InstIterator.h"
+#include <vector>
+
+
+
 namespace{
     // vector to hold the operands in a sourceline
     typedef std::vector<Value*>   LineInfo;
