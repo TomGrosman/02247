@@ -27,7 +27,7 @@ namespace{
     
     int BlockTableIteratorCounter = 0;
     class BlockHolder {
-
+        
         
     public:
         int startLine, endLine,blockLength;
@@ -243,7 +243,7 @@ namespace{
                                 if (itr == lineMap.end()){  // This is the first operand in this source line
                                     // so create and initialize the map entry with the key (line number), and a new ProcessedLine object w initialized with the line number, function name, and first operand in the lineOperands vector.
                                     
-
+                                    
                                     //lineMap.emplace(lineNumber, ProcessedLine(lineNumber,F.getName(),c));
                                     
                                 } else { // line has already been seen and initialized, so just add the latest operand
@@ -255,12 +255,12 @@ namespace{
                         }
                         
                         else{
-//                            errs() << I.getOpcodeName() << "\n";
+                            //                            errs() << I.getOpcodeName() << "\n";
                             if (DILocation *Loc = I.getDebugLoc())
                             { // Here I is an LLVM instruction
                                 unsigned Line = Loc->getLine();
                                 
-//                                errs()<< Line << "\n";
+                                //                                errs()<< Line << "\n";
                                 
                                 int lineNumber = 0;
                                 
@@ -275,9 +275,9 @@ namespace{
                                 
                             }}
                         
-//                        errs()<<"****** \n";
+                        //                        errs()<<"****** \n";
                         
-
+                        
                         
                     }}}
             for (auto &p : lineMap) {
@@ -299,20 +299,15 @@ namespace{
             
             errs() << " HERE WE ARE\n";
             
-            for(auto &iterator : lineMap){
-                errs() << "Line Number " << iterator.first << "\n";
-                
-            }
             
             for(auto &iterator : BlockTable)
                 iterator.second.printTable();
-
             
-/*            for(auto &iterator : BlockTable){
-                compareRangesForOperands(iterator.second.startLine,iterator.second.endLine, iterator.second.blockLength,lineMap, operands);
-                compareRangesForOperators(iterator.second.startLine,iterator.second.endLine, iterator.second.blockLength,lineMap, operands);
-            };
-*/
+            
+            for(auto &iterator : BlockTable){
+             compareRangesForOperands(iterator.second.startLine, 3 ,iterator.second.endLine,lineMap, operands);
+             compareRangesForOperators(iterator.second.startLine, 3 ,iterator.second.endLine,lineMap, operands);
+             }
             
             
             return false;  //No change to code
@@ -326,10 +321,7 @@ char CopyPaste5::ID = 0;static RegisterPass<CopyPaste5> M("copypaste5","CopyPast
 
 namespace {
     
-
-    
     struct IFBLOCKS: public FunctionPass {
-        
         
         enum Equivalency {
             Identical, Literal, Structural, None
@@ -384,7 +376,7 @@ namespace {
                                 if (DILocation *Loc = iTHENBlock->getDebugLoc()) {
                                     unsigned Line = Loc->getLine();
                                     
- //                                   errs() << "THEN BLOCK  startsss at line " << Line << "\n";
+                                    //                                   errs() << "THEN BLOCK  startsss at line " << Line << "\n";
                                     thenFirstLine = Line;
                                 }
                                 
@@ -393,7 +385,7 @@ namespace {
                                 if (DILocation *Loc = iELSEBlock->getDebugLoc()) { // Here I is an LLVM instruction
                                     unsigned Line = Loc->getLine();
                                     
- //                                   errs() << "Else BLOCK  startssss at line " << Line << "\n";
+                                    //                                   errs() << "Else BLOCK  startssss at line " << Line << "\n";
                                     elseFirstline = Line;
                                     
                                 }
@@ -408,7 +400,7 @@ namespace {
                                 
                                 iTHENBlock--;
                                 std::string opcode = iTHENBlock->getOpcodeName();
-//                                errs() << opcode << " Found\n";
+                                //                                errs() << opcode << " Found\n";
                                 if (DILocation *Loc = iTHENBlock->getDebugLoc()) { // Here I is an LLVM instruction
                                     unsigned Line = Loc->getLine();
                                     errs() << "THEN BLOCK  ENDZ at line " << Line
@@ -425,8 +417,8 @@ namespace {
                         }
                 }
             }
-//            for(auto &iterator : BlockTable)
-//                iterator.second.printTable();
+            //            for(auto &iterator : BlockTable)
+            //                iterator.second.printTable();
             return false; // Does not change code
         }
     };
