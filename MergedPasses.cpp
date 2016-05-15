@@ -1,4 +1,3 @@
-
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
@@ -22,7 +21,6 @@
 using namespace llvm;
 using namespace std;
 
-
 namespace{
     
     int BlockTableIteratorCounter = 0;
@@ -30,17 +28,17 @@ namespace{
         
         
     public:
-        int startLine, endLine,blockLength;
+        int startThenBlock, startElseBlock,blockLength;
         
-        BlockHolder(int start, int end, int length) {
-            startLine = start;
-            endLine = end;
+        BlockHolder(int startThen, int startElse, int length) {
+            startThenBlock = startThen;
+            startElseBlock = startElse;
             blockLength = length;
         }
         
         void printTable(){
-            errs()  << "start line: " << startLine
-            << "  end line: " << endLine
+            errs()  << "start THEN line: " << startThenBlock
+            << "  start ELSE line: " << startElseBlock
             << "  Block Length: " << blockLength << "\n";
             
             
@@ -305,8 +303,8 @@ namespace{
             
             
             for(auto &iterator : BlockTable){
-             compareRangesForOperands(iterator.second.startLine, 3 ,iterator.second.endLine,lineMap, operands);
-             compareRangesForOperators(iterator.second.startLine, 3 ,iterator.second.endLine,lineMap, operands);
+             compareRangesForOperands(iterator.second.startThenBlock, 3 ,iterator.second.startElseBlock,lineMap, operands);
+             compareRangesForOperators(iterator.second.startThenBlock, 3 ,iterator.second.startElseBlock,lineMap, operands);
              }
             
             
