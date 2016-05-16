@@ -87,9 +87,9 @@ namespace{
         //first Example
         void compareLinesStructural (ProcessedLine compareTo){
             if (lineOperands.size() == compareTo.lineOperands.size() && lineOperators ==compareTo.lineOperators)
-                errs() << "Methods in lines " << lineNumber << " and " << compareTo.lineNumber << "are Identical. \n";
+                errs() << "Lines " << lineNumber << " and " << compareTo.lineNumber << "are structurally identical. \n";
             else
-                errs() << "Methods in lines " << lineNumber << " and " << compareTo.lineNumber << "are not Identical. \n";
+                errs() << "Lines " << lineNumber << " and " << compareTo.lineNumber << "are not structurally identical. \n";
         }
         
         // utility method to print out a ProcessedLine object
