@@ -61,3 +61,28 @@ void compareMap(std::map<int, ProcessedLine > testMap, CompareType type, int k){
     break;
   }
 }
+
+void compareRangesForOperands(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
+switch (type){
+	case operand:
+	float counter = 0.0;
+	for(int i=0; i<lenght; i++)
+	   if(testMap.at(start1+i).lineOperands == testMap.at(start2+i).lineOperands)	      counter++;
+	   errs() << "Ranges of lines are Identical operand wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+	   break;
+	case operator:
+	float counter = 0.0;
+	for(int i=0; i<lenght; i++)
+	    if(testMap.at(start1+i).lineOperator == testMap.at(start2+i).lineOperator)     counter++;
+	    errs() << "Ranges of lines are Identical operator wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+	    break;
+  	case operandsANDoperators:
+	float counter = 0.0;
+	for(int i=0; i<lenght; i++)
+	    if((testMap.at(start1+i).lineOperator == testMap.at(start2+i).lineOperator) && (testMap.at(start1+i).lineOperands == testMap.at(start2+i).lineOperands))
+	       counter++;
+	    errs() << "Ranges of lines are Identical operator and operand wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+	    break;
+	
+}
+}
