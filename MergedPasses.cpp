@@ -85,7 +85,7 @@ namespace{
         
         //function to detect more complicated patterns.refer to section 4.2 in pdf a4 from the lecture
         //first Example
-        void compareMethods (ProcessedLine compareTo){
+        void compareLinesStructural (ProcessedLine compareTo){
             if (lineOperands.size() == compareTo.lineOperands.size() && lineOperators ==compareTo.lineOperators)
                 errs() << "Methods in lines " << lineNumber << " and " << compareTo.lineNumber << "are Identical. \n";
             else
@@ -286,7 +286,7 @@ namespace{
             
             
             //lineMap.at(22).compareLines (lineMap.at(23));
-            //lineMap.at(18).compareMethods (lineMap.at(19));
+            //lineMap.at(18).compareLinesStructural (lineMap.at(19));
 //    compareRangesForOperands(11, 2, 14,lineMap, operands);
  //   compareRangesForOperators(11, 2, 14,lineMap, operators);
             
