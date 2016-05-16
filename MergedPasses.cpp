@@ -159,7 +159,7 @@ namespace{
             for(int i=0; i<lenght; i++)
                 if(testMap.at(start1+i).lineOperands == testMap.at(start2+i).lineOperands)
                     counter++;
-            errs() << "Ranges of lines are Identical operand wise" << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+            errs() << "Ranges of lines are Identical operand wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
         }
         
         void compareRangesForOperators(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
@@ -175,7 +175,7 @@ namespace{
             std::map<int, ProcessedLine> lineMap;   // Map containing all source lines processed
             std::map<int, ProcessedLine>::iterator itr;
             itr = lineMap.begin();
-            //M.dump();
+            M.dump();
             for (auto &F :  M) {
                 for (auto &B : F){
                     for(auto &I: B){
@@ -220,11 +220,8 @@ namespace{
                             
                         }else if((storeInst = dyn_cast<StoreInst>(&I))){
                             StringRef constant = storeInst->llvm::User::getName();
-                            //errs() << "hello  we are here " << "\n";
                             errs() << constant << "\n";
-                            //errs() << "hello  we are here 2 " << "\n";
                             
-                            //errs() << "Name: " << getOriginalName(constant) << "\n";
                             
                             if (DILocation *Loc = I.getDebugLoc())
                             { // Here I is an LLVM instruction
@@ -238,11 +235,10 @@ namespace{
                                 lineNumber=Line;
                                 itr=lineMap.find(lineNumber); // Find the line in the map if it exists already
                                 
-                                if (itr == lineMap.end()){  // This is the first operand in this source line
-                                    // so create and initialize the map entry with the key (line number), and a new ProcessedLine object w initialized with the line number, function name, and first operand in the lineOperands vector.
+                                if (itr == lineMap.end()){
                                     
-                                    
-                                    //lineMap.emplace(lineNumber, ProcessedLine(lineNumber,F.getName(),c));
+                                    //filling up the table with dummy information so we know something is there but we can not compare that now
+                                    lineMap.emplace(lineNumber, ProcessedLine(lineNumber,F.getName(),{}));
                                     
                                 } else { // line has already been seen and initialized, so just add the latest operand
                                     //itr->second.lineOperands.push_back(constant);
@@ -253,12 +249,12 @@ namespace{
                         }
                         
                         else{
-                            //                            errs() << I.getOpcodeName() << "\n";
+                            // errs() << I.getOpcodeName() << "\n";
                             if (DILocation *Loc = I.getDebugLoc())
                             { // Here I is an LLVM instruction
                                 unsigned Line = Loc->getLine();
                                 
-                                //                                errs()<< Line << "\n";
+                                // errs()<< Line << "\n";
                                 
                                 int lineNumber = 0;
                                 
@@ -303,8 +299,8 @@ namespace{
             
             
             for(auto &iterator : BlockTable){
-             compareRangesForOperands(iterator.second.startThenBlock, 3 ,iterator.second.startElseBlock,lineMap, operands);
-             compareRangesForOperators(iterator.second.startThenBlock, 3 ,iterator.second.startElseBlock,lineMap, operands);
+             compareRangesForOperands(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
+             compareRangesForOperators(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
              }
             
             
