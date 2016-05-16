@@ -4,7 +4,6 @@ void compareMap(std::map<int, ProcessedLine > testMap, CompareType type, int k){
 
     std::map<int,int>::iterator itfin=first.end();
     std::map<int,int>::iterator itdeb=first.begin();
-    int k =2;
     int i = itdeb->first;
     int fin = itfin->first ;
     while (i != fin){
@@ -29,7 +28,7 @@ void compareMap(std::map<int, ProcessedLine > testMap, CompareType type, int k){
     int fin = itfin->first ;
     while (i != fin){
       int j = i+k;
-      while (testMap[i].lineOperandstors != testMap[j].lineOperators && j<fin-k)      j++;
+      while (testMap[i].lineOperators != testMap[j].lineOperators && j<fin-k)      j++;
       int n =1;
       int cpt=1;
       while ((testMap[i+n].lineOperators == testMap[j+n].lineOperators) && j<fin){
@@ -49,7 +48,7 @@ void compareMap(std::map<int, ProcessedLine > testMap, CompareType type, int k){
     int fin = itfin->first ;
     while (i != fin){
       int j = i+k;
-      while (testMap[i].lineOperandstors != testMap[j].lineOperators && (testMap[i].lineOperands == testMap[j].lineOperands) && j<fin-k)      j++;
+      while (testMap[i].lineOperators != testMap[j].lineOperators && (testMap[i].lineOperands == testMap[j].lineOperands) && j<fin-k)      j++;
       int n =1;
       int cpt=1;
       while ((testMap[i+n].lineOperators == testMap[j+n].lineOperators) && (testMap[i+n].lineOperands == testMap[j+n].lineOperands) && j<fin){
