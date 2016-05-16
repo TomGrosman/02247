@@ -37,11 +37,18 @@ int main(){
     x=10;
   }
   if (x==9){ // to see the behaviour
-    while(x!=10){ // try the same with a for loop
+    while(x!=10){ 
       x++;
     }
   }
-
+  
+  if (x==9){ 
+    for (int f=0;f<10;f++){
+      x++;
+    }
+  }
+  
+  
   if (x==9){ //nested if loop not managed by our pass
     x=10;
   }else if{x==98){
