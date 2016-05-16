@@ -1,3 +1,4 @@
+
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
@@ -153,13 +154,12 @@ namespace{
         }
         
         
-        
         void compareRangesForOperands(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
             float counter = 0.0;
             for(int i=0; i<lenght; i++)
                 if(testMap.at(start1+i).lineOperands == testMap.at(start2+i).lineOperands)
                     counter++;
-            errs() << "Ranges of lines are Identical operand wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+            errs() << "Ranges of lines are Identical " << (int)(counter/((float)lenght)*100)<< "% operand wise. "   "\n";
         }
         
         void compareRangesForOperators(int start1, int lenght, int start2, std::map<int, ProcessedLine  > testMap, CompareType type){
@@ -167,7 +167,7 @@ namespace{
             for(int i=0; i<lenght; i++)
                 if(testMap.at(start1+i).lineOperators == testMap.at(start2+i).lineOperators)
                     counter++;
-            errs() << "Ranges of lines are Identical operator wise " << (int)(counter/((float)lenght)*100)<< "%" << "\n";
+            errs() << "Ranges of lines are Identical " << (int)(counter/((float)lenght)*100)<< "% operator wise. "   "\n";
         }
         
         
@@ -175,7 +175,7 @@ namespace{
             std::map<int, ProcessedLine> lineMap;   // Map containing all source lines processed
             std::map<int, ProcessedLine>::iterator itr;
             itr = lineMap.begin();
-            M.dump();
+//            M.dump();
             for (auto &F :  M) {
                 for (auto &B : F){
                     for(auto &I: B){
@@ -186,15 +186,15 @@ namespace{
                         if((loadInst = dyn_cast<LoadInst>(&I))){
                             Value* operand = loadInst->llvm::User::getOperand(0);
                             
-                            operand->dump();
+//                            operand->dump();
                             
-                            errs() << "Name: " << getOriginalName(operand) << "\n";
+//                            errs() << "Name: " << getOriginalName(operand) << "\n";
                             
                             if (DILocation *Loc = I.getDebugLoc())
                             { // Here I is an LLVM instruction
                                 unsigned Line = Loc->getLine();
                                 
-                                errs()<< Line << "\n";
+//                                errs()<< Line << "\n";
                                 
                                 int lineNumber = 0;
                                 
@@ -219,15 +219,15 @@ namespace{
                             }
                             
                         }else if((storeInst = dyn_cast<StoreInst>(&I))){
-                            StringRef constant = storeInst->llvm::User::getName();
-                            errs() << constant << "\n";
+//                            StringRef constant = storeInst->llvm::User::getName();
+//                            errs() << constant << "\n";
                             
                             
                             if (DILocation *Loc = I.getDebugLoc())
                             { // Here I is an LLVM instruction
                                 unsigned Line = Loc->getLine();
                                 
-                                errs()<< Line << "\n";
+//                                errs()<< Line << "\n";
                                 
                                 int lineNumber = 0;
                                 
@@ -274,12 +274,12 @@ namespace{
                         
                         
                     }}}
-            for (auto &p : lineMap) {
+           for (auto &p : lineMap) {
                 errs() << "KEY=>" << p.first <<   "  ";
                 p.second.printALine();
                 p.second.printOperatorsLine();
             }
-            
+
             
             //these are the tests that you need to uncomment to check and modify the inputs based on your program
             
@@ -287,21 +287,17 @@ namespace{
             
             //lineMap.at(22).compareLines (lineMap.at(23));
             //lineMap.at(18).compareMethods (lineMap.at(19));
-            //compareRangesForOperands(12, 3, 16,lineMap, operands);
-            //compareRangesForOperators(12, 3, 16,lineMap, operators);
-            
-            
-            errs() << " HERE WE ARE\n";
-            
+//    compareRangesForOperands(11, 2, 14,lineMap, operands);
+ //   compareRangesForOperators(11, 2, 14,lineMap, operators);
             
             for(auto &iterator : BlockTable)
                 iterator.second.printTable();
             
             
             for(auto &iterator : BlockTable){
-             compareRangesForOperands(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
-             compareRangesForOperators(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
-             }
+                compareRangesForOperands(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
+                compareRangesForOperators(iterator.second.startThenBlock, iterator.second.blockLength ,iterator.second.startElseBlock,lineMap, operands);
+            }
             
             
             return false;  //No change to code
@@ -316,18 +312,7 @@ char CopyPaste5::ID = 0;static RegisterPass<CopyPaste5> M("copypaste5","CopyPast
 namespace {
     
     struct IFBLOCKS: public FunctionPass {
-        
-        enum Equivalency {
-            Identical, Literal, Structural, None
-        };
-        // Identical = literally and structurally
-        // Literal = same literals but not same variables (different semantics)
-        // Structural = same statement form, but different variables and/or literals
-        
-        bool compareBlocks(BasicBlock block1, BasicBlock block2,
-                           Equivalency compareType) {
-            return true;
-        }
+
         
         static char ID;
         BasicBlock *THENBlock = NULL;
@@ -346,8 +331,8 @@ namespace {
                     THENBlock = ELSEBlock;
                 ELSEBlock = &B;
                 
-                if (FirstBlockInFunction) // Nothing to Compare since this is the first block in fuction
-                    FirstBlockInFunction = false;
+                if (FirstBlockInFunction){ // Nothing to Compare since this is the first block in fuction
+                    FirstBlockInFunction = false;}
                 else {                       //Check for THEN statement Control Flow
                     if ((ELSEBlock->getUniquePredecessor()
                          == THENBlock->getUniquePredecessor())
@@ -411,8 +396,8 @@ namespace {
                         }
                 }
             }
-            //            for(auto &iterator : BlockTable)
-            //                iterator.second.printTable();
+                        for(auto &iterator : BlockTable)
+                            iterator.second.printTable();
             return false; // Does not change code
         }
     };
